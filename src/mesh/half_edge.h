@@ -1,6 +1,7 @@
 #ifndef MESH_HALF_EDGE_H
 #define MESH_HALF_EDGE_H
 
+#include <boost/shared_ptr.hpp>
 
 namespace GraphNavigation
 {
@@ -11,9 +12,9 @@ template<typename HVertexT, typename FaceT>
 class  HalfEdge
 {
     public:
-	typedef HVertexT* HVertexPtr;
-	typedef FaceT* FacePtr;
-	typedef HalfEdge<HVertexT, FaceT>* HalfEdgePtr;
+	typedef boost::shared_ptr<HVertexT> HVertexPtr;
+	typedef boost::shared_ptr<FaceT> FacePtr;
+	typedef boost::shared_ptr<HalfEdge<HVertexT, FaceT>> HalfEdgePtr;
 
 	void setNext  (HalfEdgePtr next)    { next_ = next;};
 	void setPair  (HalfEdgePtr pair)    { pair_ = pair;};
@@ -22,8 +23,8 @@ class  HalfEdge
 	void setFace  (FacePtr face)       {face_ = face;};
 	bool hasPair(){return pair_ != 0;};
 	bool hasFace(){return face_ != nullptr;};
-	HalfEdge<HVertexT, FaceT> *next(){return next_;};
-	HalfEdge<HVertexT, FaceT> *pair(){return pair_;};
+	HalfEdgePtr next(){return next_;};
+	HalfEdgePtr pair(){return pair_;};
 	HVertexPtr start(){return start_;};
 	HVertexPtr end(){return end_;};
 	FacePtr face(){return face_;};

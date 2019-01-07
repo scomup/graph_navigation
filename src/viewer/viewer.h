@@ -36,7 +36,9 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
 #include "../rrt/BiRRT.h"
+#include "src/mesh/half_edge_mesh.h"
 
+using namespace GraphNavigation::Mesh;
 
 
 class Viewer
@@ -54,7 +56,7 @@ public:
     void SetCloudDrawer(std::shared_ptr<CloudAnalyzerHandle> cloud_analyzer_handle);
     void SetRRTHandler(std::shared_ptr<PlannerHandle> rrt){handler_for_rrt_ = rrt;};
     bool isFinished(){return finish_;};
-    void SetMesh(pcl::PolygonMesh mesh){mesh_ = mesh;};
+    void SetMesh(GraphNavigation::Mesh::HalfEdgeMesh<Eigen::Vector3d> mesh){mesh_ = mesh;};
 
 private:
     double t_;
@@ -75,7 +77,7 @@ private:
     std::shared_ptr<PlannerHandle> handler_for_rrt_;
     Eigen::Vector3d start_ = Eigen::Vector3d(0,0,0);
     Eigen::Vector3d goal_ = Eigen::Vector3d(0,0,0);
-    pcl::PolygonMesh mesh_;
+    HalfEdgeMesh<Eigen::Vector3d> mesh_;
 
 };
 

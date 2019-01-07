@@ -3,6 +3,7 @@
 
 #include <Eigen/Dense>
 #include <stdlib.h>
+#include <boost/shared_ptr.hpp>
 #include "src/mesh/vertex.h"
 #include "src/mesh/face.h"
 #include "src/mesh/half_edge.h"
@@ -20,14 +21,16 @@ class  HalfEdgeMesh
 	typedef Face<T> FaceT;
     typedef Vertex<T> VertexT;
     typedef HalfEdge<VertexT, FaceT> HEdgeT;
-    typedef FaceT*    FaceTPtr;
-    typedef VertexT*  VertexTPtr;
-    typedef HEdgeT*   HEdgeTPtr;
+    typedef boost::shared_ptr<FaceT>    FaceTPtr;
+    typedef boost::shared_ptr<VertexT>  VertexTPtr;
+    typedef boost::shared_ptr<HEdgeT>   HEdgeTPtr;
 
 	virtual void addVertex(T v);
 	virtual void addNormal(T n);
 	virtual void addTriangle(size_t a, size_t b, size_t c);
 
+	std::vector<VertexTPtr>& getVertices() { return vertices_; }
+	std::vector<FaceTPtr>& getFaces() { return faces_; }
 	HEdgeTPtr halfEdgeToVertex(VertexTPtr v, VertexTPtr next);
 
 
@@ -39,7 +42,7 @@ protected:
 	std::vector<VertexTPtr>  vertices_;
 
 	/// The indexed of the newest inserted vertex
-	size_t  vertexs_size_;
+	size_t  vertexs_size_ = 0;
 
 };
 

@@ -1,3 +1,4 @@
+
 #ifndef MESH_VERTEX_H
 #define MESH_VERTEX_H
 
@@ -5,6 +6,9 @@
 #include <boost/shared_ptr.hpp>
 #include "src/mesh/half_edge.h"
 #include "src/mesh/face.h"
+
+
+using namespace GraphNavigation::Mesh;
 
 namespace GraphNavigation
 {
@@ -21,9 +25,6 @@ class Vertex
 	Vertex(T p){
 		position_ = p;
 	}
-
-
-
 
 	// The vertex's position
 	T position_;

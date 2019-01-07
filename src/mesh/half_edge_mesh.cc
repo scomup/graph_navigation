@@ -1,4 +1,6 @@
 #include "src/mesh/half_edge_mesh.h"
+#include <boost/make_shared.hpp>
+
 
 
 namespace GraphNavigation
@@ -9,7 +11,7 @@ namespace Mesh
 template <typename T>
 void HalfEdgeMesh<T>::addVertex(T v)
 { 
-	VertexT *vertex = new VertexT(v);
+	VertexTPtr vertex = boost::make_shared<VertexT>(v);
 	vertex->index_ = vertices_.size();
 	vertices_.push_back(vertex);
 	vertexs_size_++;
@@ -25,8 +27,9 @@ void HalfEdgeMesh<T>::addNormal(T n)
 template <typename T>
 void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 {
+	
 	// Create a new face
-	FaceTPtr face = new FaceT;
+	FaceTPtr face = boost::make_shared<FaceT>();
 	faces_.push_back(face);
 
 	// Create a list of HalfEdges that will be connected
@@ -75,7 +78,7 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 				edges[k] = edgeToVertex->pair();
 			}
 			else{
-				HEdgeTPtr edge = new HEdgeT;
+				HEdgeTPtr edge = boost::make_shared<HEdgeT>();
 				//m_garbageEdges.insert(edge);
 				edge->setStart(edgeToVertex->end());
 				edge->setEnd(edgeToVertex->start());
@@ -86,13 +89,13 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 		else
 		{
 			// Create new edge and pair
-			HEdgeTPtr edge = new HEdgeT;
+			HEdgeTPtr edge = boost::make_shared<HEdgeT>();
 			//m_garbageEdges.insert(edge);
 			edge->setFace(face);
 			edge->setStart(current);
 			edge->setEnd(next);
 
-			HEdgeTPtr pair = new HEdgeT;
+			HEdgeTPtr pair = boost::make_shared<HEdgeT>();
 			//m_garbageEdges.insert(pair);
 			pair->setStart(next);
 			pair->setEnd(current);
@@ -131,7 +134,8 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 
 
 template<typename T>
-HalfEdge<Vertex<T>, Face<T>>* HalfEdgeMesh<T>::halfEdgeToVertex(VertexTPtr v, VertexTPtr next)
+boost::shared_ptr<HalfEdge<Vertex<T>, Face<T>>> 
+HalfEdgeMesh<T>::halfEdgeToVertex(VertexTPtr v, VertexTPtr next)
 {
 	HEdgeTPtr edge = nullptr;
 	HEdgeTPtr cur;

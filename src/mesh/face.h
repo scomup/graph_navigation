@@ -3,6 +3,7 @@
 
 #include "src/mesh/half_edge.h"
 #include "src/mesh/vertex.h"
+#include <iostream>
 
 namespace GraphNavigation
 {
@@ -17,10 +18,10 @@ class Face
 {
     public:
 	  typedef Vertex<T> VertexT;
-	  typedef VertexT *VertexPtr;
+	  typedef boost::shared_ptr<VertexT> VertexPtr;
 
 	  typedef HalfEdge<Vertex<T>, Face<T>> HEdge;
-	  typedef HEdge *EdgePtr;
+	  typedef boost::shared_ptr<HEdge> EdgePtr;
 
 	  // A pointer to a surrounding half edge
 	  EdgePtr edge_;
@@ -51,9 +52,53 @@ class Face
 		  T diff1 = vertices[0] - vertices[1];
 		  T diff2 = vertices[0] - vertices[2];
 		  normal_ = (diff1.cross(diff2));
+		  normal_ = normal_/normal_.norm();
+		  if(normal_.z() < 0){
+			  normal_ = -normal_;
+		  }
+		  std::vector<VertexT> v;
 	  }
 
+	  void getVertices(std::vector<VertexT> &v)
+	  {
+		  VertexPtr start = edge_->start();
+		  EdgePtr current_edge = edge_;
+		  do
+		  {
+			  v.push_back(current_edge->end()->position_);
+			  current_edge = current_edge->next();
+		  } while (current_edge->end() != start);
+		  v.push_back(current_edge->end()->position_);
+	  }
 
+	  
+
+	  void getCentroid()
+	  {
+		  std::vector<VertexT> vert;
+		  getVertices(vert);
+
+		  VertexT centroid;
+
+		  for (size_t i = 0; i < vert.size(); i++)
+		  {
+			  centroid += vert[i];
+		  }
+
+		  if (vert.size() > 0)
+		  {
+			  centroid.x = centroid.x / vert.size();
+			  centroid.y = centroid.y / vert.size();
+			  centroid.z = centroid.z / vert.size();
+		  }
+		  else
+		  {
+			  std::cout << "Warning: HalfEdgeFace::getCentroid: No vertices found." << std::endl;
+			  return VertexT();
+		  }
+
+		  return centroid;
+	  }
 };
 
 } // namespace Mesh

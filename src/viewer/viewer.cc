@@ -69,6 +69,15 @@ void Viewer::Run()
                                 .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
                                 .SetHandler(handler);
 
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+
+    GLfloat lightColor0[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    GLfloat lightPos0[] = {0.0f, 0.0f, 100.0f, 1.0f};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightColor0);
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos0);
+
     glEnable(GL_DEPTH_TEST);
     glEnable (GL_BLEND);
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -109,15 +118,12 @@ void Viewer::Run()
             handler_for_rrt_->DrawPath();
         }
         */
+
+       /*
         pcl::PointCloud<pcl::PointXYZ>::Ptr vertices( new pcl::PointCloud<pcl::PointXYZ> );
         pcl::fromPCLPointCloud2( mesh_.cloud, *vertices ); 
         for (::pcl::Vertices v : mesh_.polygons)
         {
-            /*
-            int idx = v.vertices[0];
-            glBegin(GL_POINTS);
-            glVertex3f(vertices->points[idx].x, vertices->points[idx].y, vertices->points[idx].z);
-            glEnd();*/
 
             pangolin::glColorHSV(std::abs(vertices->points[v.vertices[0]].z * 100));
             glBegin(GL_TRIANGLES);
@@ -136,6 +142,24 @@ void Viewer::Run()
             glEnd();
             
        }
+       */
+
+      auto faces = mesh_.getFaces();
+      auto vertices = mesh_.getVertices();
+      for(auto face : faces){
+          auto n = face->normal_;
+          auto a = vertices[face->indices_[0]]->position_;
+          auto b = vertices[face->indices_[1]]->position_;
+          auto c = vertices[face->indices_[2]]->position_;
+          glBegin(GL_TRIANGLES);
+          pangolin::glColorHSV(std::abs(a.z() * 100));
+          glNormal3f(n.x(), n.y(), n.z());
+          glVertex3f(a.x(), a.y(), a.z());
+          glVertex3f(b.x(), b.y(), b.z());
+          glVertex3f(c.x(), c.y(), c.z());
+          glEnd();
+
+      }
 
         pangolin::FinishFrame();
     }

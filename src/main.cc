@@ -9,12 +9,27 @@
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/variant/get.hpp>
+
+#include "src/mesh/half_edge_mesh.h"
+#include <Eigen/Dense>
+
 using namespace std;
 using namespace boost;
 
 
 int main()
 {
+
+
+
+    GraphNavigation::Mesh::HalfEdgeMesh<Eigen::Vector3d> mesh;
+    mesh.addVertex(Eigen::Vector3d(0,0,0));
+    mesh.addVertex(Eigen::Vector3d(0,1,0));
+    mesh.addVertex(Eigen::Vector3d(1,1,0));
+
+
+
+
     //定义图的种类
     typedef adjacency_list<listS, vecS, directedS, no_property, property<edge_weight_t, double>> graph_t;
     //定义相关类型

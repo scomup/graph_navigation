@@ -15,41 +15,6 @@
 #include "src/mesh/half_edge_mesh.h"
 
 
-// Vertex Costs
-struct vertex_costs_t {
-  typedef boost::vertex_property_tag kind;
-};
-
-// Edge distances - Euclidean vertex distances 
-struct edge_distance_t {
-  typedef boost::edge_property_tag kind;
-};
-
-
-typedef boost::adjacency_list_traits<boost::listS, boost::vecS, boost::undirectedS>::vertex_descriptor vertex_descriptor;
-
-typedef boost::adjacency_list<
-    boost::listS, boost::vecS, boost::undirectedS,
-    // Vertex properties
-    boost::property<vertex_costs_t, float>,
-    // Edge properties
-    boost::property<edge_distance_t, float>>
-    Graph;
-
-typedef boost::graph_traits<Graph>::out_edge_iterator out_edge_iterator;
-typedef std::pair<out_edge_iterator, out_edge_iterator> out_edge_iterator_range;
-typedef boost::graph_traits < Graph >::adjacency_iterator adjacency_iterator;
-
-
-typedef boost::property_map<Graph, vertex_costs_t>::type VertexCostMap;
-typedef boost::property_map<Graph, edge_distance_t>::type EdgeDistanceMap;
-
-
-typedef Graph::vertex_descriptor GraphNode;
-typedef Graph::edge_descriptor GraphEdge;
-typedef Graph::vertex_iterator GraphNode_iterator;
-typedef float CostType;
-
 namespace GraphNavigation
 {
 namespace Mesh
@@ -58,41 +23,42 @@ namespace Mesh
 /**
  * @brief A implementation of a half edge triangle mesh.
  */
-template<typename T>
+
+  // specify some types
+  typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, boost::no_property,
+    boost::property<boost::edge_weight_t, float> > mygraph_t;
+  typedef boost::property_map<mygraph_t, boost::edge_weight_t>::type WeightMap;
+  typedef mygraph_t::vertex_descriptor vertex_descriptor;
+  typedef mygraph_t::edge_descriptor edge_descriptor;
+  typedef mygraph_t::vertex_iterator vertex_iterator;
+  typedef std::pair<int, int> edge;
+
+template <typename T>
 class MeshMap : public HalfEdgeMesh<T>
 {
 public:
-
-  typedef boost::shared_ptr< MeshMap<T> > Ptr;
-  typedef Face<T> HFace;
-  typedef Vertex<T> HVertex;
-  typedef HalfEdge< HVertex, HFace > HEdge;
-
-  typedef boost::shared_ptr<HEdge> EdgePtr;
-  typedef boost::shared_ptr<HFace> FacePtr;
-  typedef boost::shared_ptr<HVertex> VertexPtr;
+  typedef boost::shared_ptr<MeshMap<T>> Ptr;
+  typedef Face<T> FaceT;
+  typedef Vertex<T> VertexT;
+  typedef HalfEdge<VertexT, FaceT> EdgeT;
+  typedef boost::shared_ptr<EdgeT> EdgeTPtr;
+  typedef boost::shared_ptr<FaceT> FaceTPtr;
+  typedef boost::shared_ptr<VertexT> VertexTPtr;
 
   MeshMap();
-  
-  virtual void addVertex(T v); 
-  
+
+  virtual void addVertex(T v);
   virtual void addTriangle(uint a, uint b, uint c);
-
-
+  void make_graph();
 private:
-
-  Graph face_graph_, vertex_graph_;
+  mygraph_t graph_;
   size_t face_cnt_;
   size_t vertex_cnt_;
 
-
 };
 
+} // namespace Mesh
+} // namespace GraphNavigation
 
-
-}
-}
-
-
-
+#include "mesh_map.tcc"
 #endif /* GRAPHHALFEDGEMESH_H_ */

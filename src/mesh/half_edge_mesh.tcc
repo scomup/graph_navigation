@@ -155,8 +155,7 @@ HalfEdgeMesh<T>::halfEdgeToVertex(VertexTPtr v, VertexTPtr next)
     return edge;
 }
 
-
-HalfEdgeMesh<Eigen::Vector3d> HalfEdgeMesh3D;
+//HalfEdgeMesh<Eigen::Vector3d> HalfEdgeMesh3D;
 
 } // namespace Mesh
 } // namespace GraphNavigation

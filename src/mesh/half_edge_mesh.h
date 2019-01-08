@@ -49,4 +49,6 @@ protected:
 
 } // namespace Mesh
 } // namespace GraphNavigation
+
+#include "half_edge_mesh.tcc"
 #endif//HALF_EDGE_H

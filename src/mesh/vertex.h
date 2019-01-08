@@ -19,8 +19,9 @@ template <typename T>
 class Vertex
 {
   public:
-  	typedef HalfEdge< Vertex<T>, Face<T> > HEdge;
-	typedef boost::shared_ptr<HEdge> EdgePtr;
+  	typedef HalfEdge< Vertex<T>, Face<T>> EdgeT;
+	typedef boost::shared_ptr<EdgeT> EdgeTPtr;
+	Vertex(){}
 
 	Vertex(T p){
 		position_ = p;
@@ -33,10 +34,10 @@ class Vertex
 	T normal_;
 
 	// The list incoming edges
-	std::vector<EdgePtr> in_;
+	std::vector<EdgeTPtr> in_;
 
 	// The list of outgoing edges
-	std::vector<EdgePtr> out_;
+	std::vector<EdgeTPtr> out_;
 
 	// The vertex index in the mesh
 	size_t index_;

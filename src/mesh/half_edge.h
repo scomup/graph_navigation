@@ -8,26 +8,26 @@ namespace GraphNavigation
 namespace Mesh
 {
 
-template<typename HVertexT, typename FaceT>
+template<typename VertexT, typename FaceT>
 class  HalfEdge
 {
     public:
-	typedef boost::shared_ptr<HVertexT> HVertexPtr;
-	typedef boost::shared_ptr<FaceT> FacePtr;
-	typedef boost::shared_ptr<HalfEdge<HVertexT, FaceT>> HalfEdgePtr;
+	typedef boost::shared_ptr<VertexT> VertexTPtr;
+	typedef boost::shared_ptr<FaceT> FaceTPtr;
+	typedef boost::shared_ptr<HalfEdge<VertexT, FaceT>> EdgeTPtr;
 
-	void setNext  (HalfEdgePtr next)    { next_ = next;};
-	void setPair  (HalfEdgePtr pair)    { pair_ = pair;};
-	void setStart (HVertexPtr start)   {start_ = start;};
-	void setEnd   (HVertexPtr end)     {end_ = end;};
-	void setFace  (FacePtr face)       {face_ = face;};
-	bool hasPair(){return pair_ != 0;};
-	bool hasFace(){return face_ != nullptr;};
-	HalfEdgePtr next(){return next_;};
-	HalfEdgePtr pair(){return pair_;};
-	HVertexPtr start(){return start_;};
-	HVertexPtr end(){return end_;};
-	FacePtr face(){return face_;};
+	void setNext(EdgeTPtr next) { next_ = next; };
+	void setPair(EdgeTPtr pair) { pair_ = pair; };
+	void setStart(VertexTPtr start) { start_ = start; };
+	void setEnd(VertexTPtr end) { end_ = end; };
+	void setFace(FaceTPtr face) { face_ = face; };
+	bool hasPair() { return pair_ != 0; };
+	bool hasFace() { return face_ != nullptr; };
+	EdgeTPtr   next() { return next_; };
+	EdgeTPtr   pair() { return pair_; };
+	VertexTPtr start() { return start_; };
+	VertexTPtr end() { return end_; };
+	FaceTPtr   face() { return face_; };
 
 	bool isBorderEdge()
 	{
@@ -47,19 +47,19 @@ class  HalfEdge
 
   private:
 	// A pointer to the next edge of this edge
-	HalfEdgePtr next_;
+	EdgeTPtr next_;
 
 	// A pointer to the pair edge of this edge
-	HalfEdgePtr pair_;
+	EdgeTPtr pair_;
 
 	// A pointer to the start vertex of this edge
-	HVertexPtr start_;
+	VertexTPtr start_;
 
 	/// A pointer to the end vertex of this edge
-	HVertexPtr end_;
+	VertexTPtr end_;
 
 	/// A pointer to the surrounded face
-	FacePtr face_;
+	FaceTPtr face_;
 
 };
 

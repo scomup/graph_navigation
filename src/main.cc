@@ -53,7 +53,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr &input)
 
 int main(int argc, char **argv)
 {
-
+/*
     ros::init(argc, argv, "test_traversability");
     ros::NodeHandle nh;
     // Create a ROS subscriber for the input point cloud
@@ -104,7 +104,7 @@ int main(int argc, char **argv)
     std::vector<int> parts = gp3.getPartIDs();
     std::vector<int> states = gp3.getPointStates();
 
-    HalfEdgeMesh<Eigen::Vector3d> mesh;
+    MeshMap<Eigen::Vector3d> mesh;
 
     for (size_t i = 0; i < cloud->size(); i++)
     {
@@ -113,7 +113,7 @@ int main(int argc, char **argv)
         mesh.addVertex(Eigen::Vector3d(point.x, point.y, point.z));
         mesh.addNormal(Eigen::Vector3d(normal[0], normal[1], normal[2]));
     }
-
+    std::cout<<"total triangles.polygons:"<<triangles.polygons.size()<<std::endl;
     for (::pcl::Vertices v : triangles.polygons)
     {
         if (v.vertices.size() != 3)
@@ -123,6 +123,11 @@ int main(int argc, char **argv)
         size_t c = v.vertices[2];
         mesh.addTriangle(a, b ,c);
     }
+    std::list<int> path_;*/
+    MeshMap<Eigen::Vector3d> mesh;
+    mesh.make_graph();
+    //mesh.vertexGraphAStar(0, 100, path_);
+
     std::cout<<"My mesh was created!\n";
 
     auto viewer = new Viewer();

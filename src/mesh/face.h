@@ -18,13 +18,14 @@ class Face
 {
     public:
 	  typedef Vertex<T> VertexT;
-	  typedef boost::shared_ptr<VertexT> VertexPtr;
-
-	  typedef HalfEdge<Vertex<T>, Face<T>> HEdge;
-	  typedef boost::shared_ptr<HEdge> EdgePtr;
+	  typedef Face<T> FaceT;
+	  typedef boost::shared_ptr<VertexT> VertexTPtr;
+	  typedef boost::shared_ptr<FaceT> FaceTPtr;
+	  typedef HalfEdge<VertexT, FaceT> EdgeT;
+	  typedef boost::shared_ptr<EdgeT> EdgeTPtr;
 
 	  // A pointer to a surrounding half edge
-	  EdgePtr edge_;
+	  EdgeTPtr edge_;
 
 	  // A vector containing the indices of face vertices
 	  size_t indices_[3];
@@ -39,8 +40,8 @@ class Face
 	  {
 		  T vertices[3];
 		  
-		  VertexPtr start = edge_->start();
-		  EdgePtr current_edge = edge_;
+		  VertexTPtr start = edge_->start();
+		  EdgeTPtr current_edge = edge_;
 
 		  int c = 0;
 		  while (current_edge->end() != start)
@@ -56,13 +57,12 @@ class Face
 		  if(normal_.z() < 0){
 			  normal_ = -normal_;
 		  }
-		  std::vector<VertexT> v;
 	  }
 
-	  void getVertices(std::vector<VertexT> &v)
+	  void getVertices(std::vector<T> &v)
 	  {
-		  VertexPtr start = edge_->start();
-		  EdgePtr current_edge = edge_;
+		  VertexTPtr start = edge_->start();
+		  EdgeTPtr current_edge = edge_;
 		  do
 		  {
 			  v.push_back(current_edge->end()->position_);
@@ -73,12 +73,12 @@ class Face
 
 	  
 
-	  void getCentroid()
+	  T getCentroid()
 	  {
-		  std::vector<VertexT> vert;
+		  std::vector<T> vert;
 		  getVertices(vert);
 
-		  VertexT centroid;
+		  T centroid(0,0,0);
 
 		  for (size_t i = 0; i < vert.size(); i++)
 		  {
@@ -87,17 +87,30 @@ class Face
 
 		  if (vert.size() > 0)
 		  {
-			  centroid.x = centroid.x / vert.size();
-			  centroid.y = centroid.y / vert.size();
-			  centroid.z = centroid.z / vert.size();
+			  centroid = centroid / vert.size();
 		  }
 		  else
 		  {
 			  std::cout << "Warning: HalfEdgeFace::getCentroid: No vertices found." << std::endl;
-			  return VertexT();
+			  return T(0,0,0);
 		  }
 
-		  return centroid;
+		  return T(0,0,0);
+	  }
+
+	  void getAdjacentFaces(std::vector<FaceTPtr> &adj)
+	  {
+
+		  EdgeTPtr current = edge_;
+
+		  do
+		  {
+			  if (current->hasNeighborFace())
+			  {
+				  adj.push_back(current->pair()->face());
+			  }
+			  current = current->next();
+		  } while (edge_ != current);
 	  }
 };
 

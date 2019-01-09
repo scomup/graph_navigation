@@ -65,7 +65,7 @@ void Viewer::Run()
                                 .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
                                 .SetHandler(handler);
 
-    glEnable(GL_LIGHTING);
+    //glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_COLOR_MATERIAL);
 
@@ -84,6 +84,16 @@ void Viewer::Run()
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         d_cam.Activate(s_cam);
         pangolin::glDrawAxis(1);
+        
+        
+        if(handler->getSign()){
+            printf("!\n");
+            path_.clear();
+            s_ = mesh_->getRandVec();
+            g_ = mesh_->getRandVec();
+            mesh_->astar(s_,g_,path_);
+        }
+
         //DrawGrid(200,1);
         /*
         if (cloud_analyzer_handle_ != nullptr)
@@ -138,11 +148,11 @@ void Viewer::Run()
             
        }
        */
-        glColor3f(1.0f, 0.0f, 0.0f);
-        glPointSize(3);
+        glColor3f(0.0f, 0.0f, 0.0f);
+        glPointSize(10);
 
-        auto faces = mesh_.getFaces();
-        auto vertices = mesh_.getVertices();
+        auto faces = mesh_->getFaces();
+        auto vertices = mesh_->getVertices();
         glBegin(GL_POINTS);
         auto start = vertices[s_]->position_;
         glVertex3f(start.x(), start.y(), start.z());
@@ -161,6 +171,7 @@ void Viewer::Run()
         }
         glEnd();
 
+/*
         for (auto face : faces)
         {
             auto n = face->normal_;
@@ -175,7 +186,29 @@ void Viewer::Run()
             glVertex3f(c.x(), c.y(), c.z());
             glEnd();
         }
+       */
 
+       glPointSize(1);
+        for (int i = 0; i < vertices.size(); i++)
+        {
+            if(!mesh_->traversability_[i])
+            glColor3f(1.0f, 0.0f, 0.0f);
+            else
+            glColor3f(0.0f, 1.0f, 0.0f);
+            auto a = vertices[i]->position_;
+            auto n = vertices[i]->normal_;
+            glBegin(GL_POINTS);
+            glVertex3f(a.x(), a.y(), a.z());
+            glEnd();
+            /*
+            pangolin::glColorHSV(std::abs(a.z() * 100));
+            glBegin(GL_LINES);
+            glVertex3f(a.x(), a.y(), a.z());
+            glVertex3f(a.x()+n.x()/10, a.y()+n.y()/10, a.z()+n.z()/10);
+            glEnd();
+            */
+
+        }
         pangolin::FinishFrame();
     }
     SetFinish();
@@ -191,7 +224,8 @@ void Viewer::SetCloudDrawer(std::shared_ptr<CloudAnalyzerHandle> cloud_analyzer_
     cloud_analyzer_handle_ = cloud_analyzer_handle;
 }
 
-void Viewer::SetMesh(MeshMap<Eigen::Vector3d> mesh)
+void Viewer::SetMesh(MeshMap<Eigen::Vector3d>* mesh)
 {
     mesh_ = mesh;
+    mesh_->astar(s_,g_,path_);
 }

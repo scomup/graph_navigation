@@ -5,95 +5,174 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/graph_utility.hpp> 
+#include <boost/graph/random.hpp>
+#include <boost/random.hpp>
+
+template <typename T>
+MeshMap<T>::MeshMap(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
+    : HalfEdgeMesh<T>(),cloud_(cloud)
+{
+    // Normal estimation*
+    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
+    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+    tree->setInputCloud(cloud);
+    n.setInputCloud(cloud);
+    n.setSearchMethod(tree);
+    n.setKSearch(20);
+    n.compute(*normals);
+    //* normals should not contain the point normals + surface curvatures
+    // Concatenate the XYZ and normal fields*
+    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
+    pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
+    //* cloud_with_normals = cloud + normals
+    // Create search tree*
+    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
+    tree2->setInputCloud(cloud_with_normals);
+    // Initialize objects
+    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
+    pcl::PolygonMesh triangles;
+    // Set the maximum distance between connected points (maximum edge length)
+    gp3.setSearchRadius(0.1);
+    // Set typical values for the parameters
+    gp3.setMu(25);
+    gp3.setMaximumNearestNeighbors(100);
+    gp3.setMaximumSurfaceAngle(M_PI / 4); // 45 degrees
+    gp3.setMinimumAngle(M_PI / 18);       // 10 degrees
+    gp3.setMaximumAngle(2 * M_PI / 3);    // 120 degrees
+    gp3.setNormalConsistency(false);
+    // Get result
+    gp3.setInputCloud(cloud_with_normals);
+    gp3.setSearchMethod(tree2);
+    gp3.reconstruct(triangles);
+    std::vector<double> angles;
+    for (auto &n : *normals)
+    {
+      if (n.normal[2] < 0)
+      {
+        n.normal[0] = -n.normal[0];
+        n.normal[1] = -n.normal[1];
+        n.normal[2] = -n.normal[2];
+      }
+    }
+    traversability_.resize(cloud->size());
+    for (size_t i = 0; i < cloud->size(); i++)
+    {
+        auto &point = cloud->points[i];
+        auto &normal = normals->points[i].normal;
+        this->addVertex(Eigen::Vector3d(point.x, point.y, point.z));
+        this->addNormal(Eigen::Vector3d(normal[0], normal[1], normal[2]));
+        Eigen::Vector3d norm(normal[0],
+                             normal[1],
+                             normal[2]);
+
+        Eigen::AngleAxisd angle_axis(Eigen::Quaterniond::FromTwoVectors(
+            norm, Eigen::Vector3d::UnitZ()));
+        //angles.push_back(angle_axis.angle());
+        if (angle_axis.angle() > M_PI / 6)
+            traversability_[i] = false;
+        else
+            traversability_[i] = true;
+    }
+
+    for (::pcl::Vertices v : triangles.polygons)
+    {
+        if (v.vertices.size() != 3)
+            continue;
+        size_t a = v.vertices[0];
+        size_t b = v.vertices[1];
+        size_t c = v.vertices[2];
+        this->addTriangle(a, b ,c);
+    }
+    make_graph();
+}
 
 template <typename T>
 MeshMap<T>::MeshMap()
-    : HalfEdgeMesh<T>(), face_cnt_(0), vertex_cnt_(0)
+    : HalfEdgeMesh<T>()
 {
+}
+template <typename T>
+bool MeshMap<T>::astar(uint start_idx, uint goal_idx, std::vector<int> &path){
+
+  vertex_descriptor start = boost::vertex(start_idx, graph_);
+  vertex_descriptor goal = boost::vertex(goal_idx, graph_);
+
+  std::vector<mesh_graph_t::vertex_descriptor> p(num_vertices(graph_));
+  std::vector<float> d(num_vertices(graph_));
+  vertex_weight_map_t vertex_weight = boost::get(boost::vertex_weight, graph_);
+  index_map_t indices = boost::get(boost::vertex_index, graph_);
+
+  try{
+    distance_heuristic h(this, indices, goal);
+    astar_goal_visitor v(goal);
+    boost::astar_search(graph_, start, h,
+                        boost::predecessor_map(&p[0])
+                        .distance_map(&d[0])
+                        .visitor(v));
+  }
+  catch (found_goal fg)
+  {
+    // found a path to the goal
+    for (vertex_descriptor v = goal;; v = p[v])
+    {
+      path.push_back(v);
+      if (p[v] == v)
+        break;
+    }
+    return true;
+  }
+  return false;
 }
 
 template <typename T>
 void MeshMap<T>::make_graph(){
-  mygraph_t g(100);
-  WeightMap weightmap = boost::get(boost::edge_weight, g);
-  auto faces = this->faces_;
-  for (std::size_t j = 0; j < 10; ++j)
+
+  auto faces = this->getFaces();
+  auto vertices = this->getVertices();
+  edge_weight_map_t edge_weight = boost::get(boost::edge_weight, graph_);
+  vertex_weight_map_t vertex_weight = boost::get(boost::vertex_weight, graph_);
+
+  for (auto vec : vertices)
   {
+    vertex_descriptor v = boost::add_vertex(graph_);
+    vertex_weight[v] = 0;
+  }
+  auto v4 = boost::vertex(4, graph_);
+  vertex_weight[v4] = 100;
+
+
+  for (auto face : faces)
+  {
+    int a = face->indices_[0];
+    int b = face->indices_[1];
+    int c = face->indices_[2];
+    auto va = boost::vertex(a, graph_);
+    auto vb = boost::vertex(b, graph_);
+    auto vc = boost::vertex(c, graph_);
+    auto pa = vertices[a]->position_;
+    auto pb = vertices[b]->position_;
+    auto pc = vertices[c]->position_;
+    
     edge_descriptor e;
     bool inserted;
-    int a = (j)%1;
-    int b = (j+1)%1;
-    std::cout<<"try form "<<a<<" to "<<b<<std::endl;
-    if(!boost::edge(boost::vertex(a, g), boost::vertex(b, g), g).second){
-        boost::tie(e, inserted) = add_edge(a, b, g);
-        weightmap[e] = 1;
-        std::cout<<"add form "<<a<<" to "<<b<<"!\n";
+
+    if(!boost::edge(va, vb, graph_).second && traversability_[a] && traversability_[b]){
+        boost::tie(e, inserted) = add_edge(a, b, graph_);
+        edge_weight[e] = (pa - pb).norm();
+    }
+    if(!boost::edge(vb, vc, graph_).second && traversability_[b] && traversability_[c]){
+        boost::tie(e, inserted) = add_edge(b, c, graph_);
+        edge_weight[e] = (pb - pc).norm();;
+    }
+    if (!boost::edge(vc, va, graph_).second && traversability_[c] && traversability_[a])
+    {   boost::tie(e, inserted) = add_edge(c, a, graph_);
+        edge_weight[e] = (pc - pa).norm();
     }
   }
-
-      if(!boost::edge(boost::vertex(1, g), boost::vertex(2, g), g).second){
-        add_edge(1, 2, g);
-        std::cout<<"add form "<<1<<" to "<<2<<"!\n";
-      }
-
-    if(!boost::edge(boost::vertex(2, g), boost::vertex(1, g), g).second){
-        add_edge(2, 1, g);
-        std::cout<<"add form "<<2<<" to "<<1<<"!\n";
-    }else{
-      std::cout<<"exist!\n";
-    }
-
-
-
-
-  //boost::print_graph(g);
-
+  //boost::print_graph(graph_);
 }
 
-template <typename T>
-void MeshMap<T>::addVertex(T v)
-{
-  HalfEdgeMesh<T>::addVertex(v);
-
-  //this->vertices_[vertex_cnt_]->index_ = vertex_cnt_;
-  //GraphNode vertex_insert = boost::add_vertex(graph_);
-  //vertex_cnt_++;
-  
-}
-
-
-template <typename T>
-void MeshMap<T>::addTriangle(uint a, uint b, uint c)
-{
-  const int face_index = face_cnt_;
-  HalfEdgeMesh<T>::addTriangle(a, b, c);
-
-
-
-/*
-
-  // set face index for the graph relationship
-  this->faces_[face_index]->face_index_ = face_index;
-  
-  std::pair<GraphEdge, bool> edge_insert;
-
-  EdgeDistanceMap vertex_graph_distances = boost::get(edge_distance_t(), vertex_graph_);
-  EdgeDistanceMap face_graph_distances = boost::get(edge_distance_t(), face_graph_);
-  VertexCostMap face_graph_vertex_costmap = boost::get(vertex_costs_t(), face_graph_);
-
-  edge_insert = boost::add_edge(a, b, vertex_graph_);
-  if(edge_insert.second){
-    vertex_graph_distances[edge_insert.first] = (this->vertices_[a]->position_ - this->vertices_[b]->position_).norm();
-  }
-  edge_insert = boost::add_edge(b, c, vertex_graph_);
-  if(edge_insert.second){
-    vertex_graph_distances[edge_insert.first] = (float)(this->vertices_[b]->position_ - this->vertices_[c]->position_).norm();
-  }
-  edge_insert = boost::add_edge(c, a, vertex_graph_);
-  if(edge_insert.second){
-    vertex_graph_distances[edge_insert.first] = (float)(this->vertices_[c]->position_ - this->vertices_[a]->position_).norm();
-  }*/
-}
 
 
 //MeshMap<Eigen::Vector3d>MeshMap3D;

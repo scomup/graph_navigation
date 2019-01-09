@@ -53,7 +53,7 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr &input)
 
 int main(int argc, char **argv)
 {
-/*
+
     ros::init(argc, argv, "test_traversability");
     ros::NodeHandle nh;
     // Create a ROS subscriber for the input point cloud
@@ -67,72 +67,39 @@ int main(int argc, char **argv)
     }
     std::cout << "map3d loaded.\n";
 
-    // Normal estimation*
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
-    pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud(cloud);
-    n.setInputCloud(cloud);
-    n.setSearchMethod(tree);
-    n.setKSearch(20);
-    n.compute(*normals);
-    //* normals should not contain the point normals + surface curvatures
-    // Concatenate the XYZ and normal fields*
-    pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
-    pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
-    //* cloud_with_normals = cloud + normals
-    // Create search tree*
-    pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
-    tree2->setInputCloud(cloud_with_normals);
-    // Initialize objects
-    pcl::GreedyProjectionTriangulation<pcl::PointNormal> gp3;
-    pcl::PolygonMesh triangles;
-    // Set the maximum distance between connected points (maximum edge length)
-    gp3.setSearchRadius(0.1);
-    // Set typical values for the parameters
-    gp3.setMu(25);
-    gp3.setMaximumNearestNeighbors(100);
-    gp3.setMaximumSurfaceAngle(M_PI / 4); // 45 degrees
-    gp3.setMinimumAngle(M_PI / 18);       // 10 degrees
-    gp3.setMaximumAngle(2 * M_PI / 3);    // 120 degrees
-    gp3.setNormalConsistency(false);
-    // Get result
-    gp3.setInputCloud(cloud_with_normals);
-    gp3.setSearchMethod(tree2);
-    gp3.reconstruct(triangles);
-    // Additional vertex information
-    std::vector<int> parts = gp3.getPartIDs();
-    std::vector<int> states = gp3.getPointStates();
 
-    MeshMap<Eigen::Vector3d> mesh;
-
-    for (size_t i = 0; i < cloud->size(); i++)
-    {
-        auto &point = cloud->points[i];
-        auto &normal = normals->points[i].normal;
-        mesh.addVertex(Eigen::Vector3d(point.x, point.y, point.z));
-        mesh.addNormal(Eigen::Vector3d(normal[0], normal[1], normal[2]));
-    }
-    std::cout<<"total triangles.polygons:"<<triangles.polygons.size()<<std::endl;
-    for (::pcl::Vertices v : triangles.polygons)
-    {
-        if (v.vertices.size() != 3)
-            continue;
-        size_t a = v.vertices[0];
-        size_t b = v.vertices[1];
-        size_t c = v.vertices[2];
-        mesh.addTriangle(a, b ,c);
-    }
-    std::list<int> path_;*/
-    MeshMap<Eigen::Vector3d> mesh;
-    mesh.make_graph();
-    //mesh.vertexGraphAStar(0, 100, path_);
+    MeshMap<Eigen::Vector3d> mesh(cloud);
 
     std::cout<<"My mesh was created!\n";
+
+/*
+    MeshMap<Eigen::Vector3d> mesh;
+
+    mesh.addVertex(Eigen::Vector3d(0, 0, 0));//0
+    mesh.addVertex(Eigen::Vector3d(0, 1, 0));//1
+    mesh.addVertex(Eigen::Vector3d(0, 2, 0));//2
+
+    mesh.addVertex(Eigen::Vector3d(1, 0, 0));//3
+    mesh.addVertex(Eigen::Vector3d(1, 1, 0));//4
+    mesh.addVertex(Eigen::Vector3d(1, 2, 0));//5
+
+    mesh.addVertex(Eigen::Vector3d(2, 0, 0));//6
+    mesh.addVertex(Eigen::Vector3d(2, 1, 0));//7
+    mesh.addVertex(Eigen::Vector3d(2, 2, 0));//8
+
+    mesh.addTriangle(0, 3 ,4);
+    mesh.addTriangle(0, 1 ,4);
+    mesh.addTriangle(1, 2 ,5);
+    mesh.addTriangle(1, 4 ,5);
+    mesh.addTriangle(3, 4 ,7);
+    mesh.addTriangle(3, 6 ,7);
+    mesh.addTriangle(4, 5 ,8);
+    mesh.addTriangle(4, 7 ,8);
+    mesh.make_graph();*/
 
     auto viewer = new Viewer();
     auto viewer_thread = std::thread(&Viewer::Run, viewer);
 
-    viewer->SetMesh(mesh);
+    viewer->SetMesh(&mesh);
     viewer_thread.join();
 }

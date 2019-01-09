@@ -220,3 +220,5 @@ int main(int argc, char **argv)
   return 0;
   
 }
+
+GraphNavigation::Mesh::MeshMap<Eigen::Matrix<double, 3, 1> >::distance_heuristic::distance_heuristic(GraphNavigation::Mesh::MeshMap<Eigen::Matrix<double, 3, 1> >*, GraphNavigation::Mesh::IndexMap&, long unsigned int&)’

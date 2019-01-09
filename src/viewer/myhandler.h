@@ -109,6 +109,7 @@ void Keyboard(View &display, unsigned char key, int x, int y, bool pressed)
         //printf("%f %f %f\n", pw[0], pw[1], pw[2]);
         if (key == 's'){
             start_ = Eigen::Vector3d(pw[0], pw[1], pw[2]);
+            //printf("%f %f %f\n", pw[0], pw[1], pw[2]);
         }
         else{
             goal_  = Eigen::Vector3d(pw[0], pw[1], pw[2]);

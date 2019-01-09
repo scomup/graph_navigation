@@ -67,7 +67,7 @@ void CloudAnalyzer<POINT_TYPE>::EstimateTraversability()
         
         if (angles_[i] > max_angle_)
         {
-            traversability_.push_back(UNTRAVERSABLE);
+            traversability_.push_back(false);
             continue;
         }
         Eigen::Vector3d normal(normal_->points[i].normal[0],

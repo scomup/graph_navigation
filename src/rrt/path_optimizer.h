@@ -164,8 +164,6 @@ class PathOptimizer : public Tree<T>
         double min_cost = 1000;
         for (auto &node : all_near_nodes)
         {
-            auto diff = target - node->state();
-            auto dist = diff.norm();
             if (!this->stateSpace_->transitionValid(node->state(), target))
                 continue;
             if(node->cost() < min_cost){

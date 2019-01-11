@@ -12,9 +12,9 @@ template<typename VertexT, typename FaceT>
 class  HalfEdge
 {
     public:
-	typedef boost::shared_ptr<VertexT> VertexTPtr;
-	typedef boost::shared_ptr<FaceT> FaceTPtr;
-	typedef boost::shared_ptr<HalfEdge<VertexT, FaceT>> EdgeTPtr;
+	typedef VertexT* VertexTPtr;
+	typedef FaceT* FaceTPtr;
+	typedef HalfEdge<VertexT, FaceT>* EdgeTPtr;
 
 	void setNext(EdgeTPtr next) { next_ = next; };
 	void setPair(EdgeTPtr pair) { pair_ = pair; };

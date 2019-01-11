@@ -36,9 +36,11 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
 #include "../rrt/BiRRT.h"
-#include "src/mesh/mesh_map.h"
+#include "src/graph/navi_graph.h"
 
-using namespace GraphNavigation::Mesh;
+//#include "src/mesh/mesh_map.h"
+
+using namespace GraphNavigation::Graph;
 
 
 class Viewer
@@ -56,7 +58,7 @@ public:
     void SetCloudDrawer(std::shared_ptr<CloudAnalyzerHandle> cloud_analyzer_handle);
     void SetRRTHandler(std::shared_ptr<PlannerHandle> rrt){handler_for_rrt_ = rrt;};
     bool isFinished(){return finish_;};
-    void SetMesh(MeshMap<Eigen::Vector3d>* mesh);
+    void SetMesh(NaviGraph<Eigen::Vector3d, float>* mesh);
 
 private:
     double t_;
@@ -77,10 +79,10 @@ private:
     std::shared_ptr<PlannerHandle> handler_for_rrt_;
     Eigen::Vector3d start_ = Eigen::Vector3d(0,0,0);
     Eigen::Vector3d goal_ = Eigen::Vector3d(0,0,0);
-    MeshMap<Eigen::Vector3d>* mesh_;
-    int s_ = 180000;
-    int g_ = 8;
-    std::vector<int> path_;
+    NaviGraph<Eigen::Vector3d, float>* graph_;
+    uint s_ = 1800;
+    uint g_ = 8;
+    std::vector<uint> path_;
 
 };
 

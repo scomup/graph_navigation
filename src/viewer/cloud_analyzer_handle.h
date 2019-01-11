@@ -16,7 +16,6 @@ public:
 
   void DrawPoint(bool mode = 0)
   {
-    double scale = 0.05;
     if (cloud_analyzer_->pcl_point_cloud_ == nullptr)
       return;
     glPointSize(3);

@@ -19,10 +19,10 @@ class Face
     public:
 	  typedef Vertex<T> VertexT;
 	  typedef Face<T> FaceT;
-	  typedef boost::shared_ptr<VertexT> VertexTPtr;
-	  typedef boost::shared_ptr<FaceT> FaceTPtr;
+	  typedef VertexT* VertexTPtr;
+	  typedef FaceT* FaceTPtr;
 	  typedef HalfEdge<VertexT, FaceT> EdgeT;
-	  typedef boost::shared_ptr<EdgeT> EdgeTPtr;
+	  typedef EdgeT* EdgeTPtr;
 
 	  // A pointer to a surrounding half edge
 	  EdgeTPtr edge_;

@@ -14,13 +14,11 @@
 #include <unordered_set>
 #include <vector>
 
-
 #include "node.h"
 #include "StateSpace.h"
 
-
-namespace RRT {
-
+namespace RRT
+{
 
 /**
  * An RRT tree searches a state space by randomly filling it in and
@@ -75,10 +73,11 @@ namespace RRT {
  * but will generally be some sort of vector.
  */
 template <typename T>
-class Tree {
-public:
-    Tree(const Tree&) = delete;
-    Tree& operator=(const Tree&) = delete;
+class Tree
+{
+  public:
+    Tree(const Tree &) = delete;
+    Tree &operator=(const Tree &) = delete;
     Tree(std::shared_ptr<StateSpace<T>> stateSpace,
          std::function<size_t(T)> hashT, int dimensions)
         : nodemap_(20, hashT),
@@ -86,7 +85,7 @@ public:
           //near_states_active_(20,hashT),
           dimensions_(dimensions),
           kdtree_(flann::KDTreeSingleIndexParams())
-            {
+    {
         stateSpace_ = stateSpace;
 
         //  default values
@@ -95,8 +94,8 @@ public:
         setGoalMaxDist(0.1);
     }
 
-    StateSpace<T>& stateSpace() { return *stateSpace_; }
-    const StateSpace<T>& stateSpace() const { return *stateSpace_; }
+    StateSpace<T> &stateSpace() { return *stateSpace_; }
+    const StateSpace<T> &stateSpace() const { return *stateSpace_; }
 
     /**
      * The maximum number of random states in the state-space that we will
@@ -104,7 +103,6 @@ public:
      */
     int maxIterations() const { return maxIterations_; }
     void setMaxIterations(int itr) { maxIterations_ = itr; }
-
 
     double stepSize() const { return stepSize_; }
     void setStepSize(double stepSize) { stepSize_ = stepSize; }
@@ -127,10 +125,12 @@ public:
      *
      * @return a bool indicating whether or not it found a path to the goal
      */
-    bool run() {
+    bool run()
+    {
         //  grow the tree until we find the goal or run out of iterations
-        for (int i = 0; i < maxIterations_; i++) {
-            Node<T>* newNode = grow();
+        for (int i = 0; i < maxIterations_; i++)
+        {
+            Node<T> *newNode = grow();
 
             if (newNode &&
                 stateSpace_->distance(newNode->state(), goalState_) <
@@ -154,7 +154,6 @@ public:
             flann::KDTreeSingleIndexParams());
         nodes_.clear();
         nodemap_.clear();
-
     }
 
     /**
@@ -170,7 +169,7 @@ public:
         //getRandomStateInNearbySet(rand_state);
         //return extend(rand_state);
     }
-/*
+    /*
     bool findStateCloseTree(const T& state)
     {
         T rand_state;
@@ -193,12 +192,13 @@ public:
      * as the second argument to get the distance that the node is away from
      * @state. This method searches a k-d tree of the points to determine
      */
-    Node<T>* nearest(const T& state, double* distanceOut = nullptr) {
+    Node<T> *nearest(const T &state, double *distanceOut = nullptr)
+    {
 
         // k-NN search (O(log(N)))
         flann::Matrix<double> query;
-            query = flann::Matrix<double>((double*)&state, 1,
-                                          sizeof(state) / sizeof(0.0));
+        query = flann::Matrix<double>((double *)&state, 1,
+                                      sizeof(state) / sizeof(0.0));
         std::vector<int> i(query.rows);
         flann::Matrix<int> indices(i.data(), query.rows, 1);
         std::vector<double> d(query.rows);
@@ -209,7 +209,8 @@ public:
         T point;
         point = (T)kdtree_.getPoint(indices[0][0]);
 
-        if (distanceOut){
+        if (distanceOut)
+        {
             *distanceOut = stateSpace_->distance(state, point);
         }
 
@@ -257,13 +258,16 @@ public:
      * @param source The Node to connect from.  If source == nullptr, then
      *             the closest tree point is used
      */
-    virtual Node<T>* extend(const T& target, Node<T>* source = nullptr) {
+    virtual Node<T> *extend(const T &target, Node<T> *source = nullptr)
+    {
         //  if we weren't given a source point, try to find a close node
         //if(nodemap_.count(target) != 0)
         //    return nullptr;
-        if (!source) {
+        if (!source)
+        {
             source = nearest(target, nullptr);
-            if (!source) {
+            if (!source)
+            {
                 return nullptr;
             }
         }
@@ -277,7 +281,8 @@ public:
 
         //  Make sure there's actually a direct path from @source to
         //  @intermediateState.  If not, abort
-        if (!stateSpace_->transitionValid(source->state(), intermediateState)) {
+        if (!stateSpace_->transitionValid(source->state(), intermediateState))
+        {
             return nullptr;
         }
 
@@ -297,18 +302,24 @@ public:
      * @param reverse if true, the states will be sent from @dest to the tree's
      *     root
      */
-    void getPath(std::function<void(const T& stateI)> callback,
-                 const Node<T>* dest = nullptr, bool reverse = false) const {
-        const Node<T>* node = (dest != nullptr) ? dest : lastNode();
-        if (reverse) {
-            while (node) {
+    void getPath(std::function<void(const T &stateI)> callback,
+                 const Node<T> *dest = nullptr, bool reverse = false) const
+    {
+        const Node<T> *node = (dest != nullptr) ? dest : lastNode();
+        if (reverse)
+        {
+            while (node)
+            {
                 callback(node->state());
                 node = node->parent();
             }
-        } else {
+        }
+        else
+        {
             // collect states in list in leaf -> root order
-            std::vector<const Node<T>*> nodes;
-            while (node) {
+            std::vector<const Node<T> *> nodes;
+            while (node)
+            {
                 nodes.push_back(node);
                 node = node->parent();
             }
@@ -316,7 +327,8 @@ public:
             // pass them one-by-one to the callback, reversing the order so
             // that the callback is called with the start point first and the
             // dest point last
-            for (auto itr = nodes.rbegin(); itr != nodes.rend(); itr++) {
+            for (auto itr = nodes.rbegin(); itr != nodes.rend(); itr++)
+            {
                 callback((*itr)->state());
             }
         }
@@ -328,9 +340,10 @@ public:
      *
      * @param vectorOut The vector to append the states along the path
      */
-    void getPath(std::vector<T>* vectorOut, const Node<T>* dest = nullptr,
-                 bool reverse = false) const {
-        getPath([&](const T& stateI) { vectorOut->push_back(stateI); }, dest,
+    void getPath(std::vector<T> *vectorOut, const Node<T> *dest = nullptr,
+                 bool reverse = false) const
+    {
+        getPath([&](const T &stateI) { vectorOut->push_back(stateI); }, dest,
                 reverse);
     }
 
@@ -338,8 +351,9 @@ public:
      * The same as the first getPath() method, but returns the vector of states
      * instead of executing a callback.
      */
-    std::vector<T> getPath(const Node<T>* dest = nullptr,
-                           bool reverse = false) const {
+    std::vector<T> getPath(const Node<T> *dest = nullptr,
+                           bool reverse = false) const
+    {
         std::vector<T> path;
         getPath(&path, dest, reverse);
         return path;
@@ -348,8 +362,10 @@ public:
     /**
      * @return The root node or nullptr if none exists
      */
-    const Node<T>* rootNode() const {
-        if (nodes_.empty()) return nullptr;
+    const Node<T> *rootNode() const
+    {
+        if (nodes_.empty())
+            return nullptr;
 
         return &nodes_.front();
     }
@@ -357,8 +373,10 @@ public:
     /**
      * @return The most recent Node added to the tree
      */
-    const Node<T>* lastNode() const {
-        if (nodes_.empty()) return nullptr;
+    const Node<T> *lastNode() const
+    {
+        if (nodes_.empty())
+            return nullptr;
 
         return &nodes_.back();
     }
@@ -366,41 +384,41 @@ public:
     /**
      * All the nodes
      */
-    const std::deque<Node<T>>& allNodes() const { return nodes_; }
+    const std::deque<Node<T>> &allNodes() const { return nodes_; }
 
     /**
      * @brief The start state for this tree
      */
-    const T& startState() const {
+    const T &startState() const
+    {
         if (nodes_.empty())
             throw std::logic_error("No start state specified for RRT::Tree");
         else
             return rootNode()->state();
     }
-    void setStartState(const T& startState) {
+    void setStartState(const T &startState)
+    {
         reset();
 
         //  create root node from provided start state
         kdtree_.buildIndex(flann::Matrix<double>(
-            (double*)&(startState), 1, dimensions_));
+            (double *)&(startState), 1, dimensions_));
         addNode(startState, nullptr);
-
-    
     }
 
     /**
      * @brief The goal this tree is trying to reach.
      */
-    const T& goalState() const { return goalState_; }
-    void setGoalState(const T& goalState) { goalState_ = goalState; }
+    const T &goalState() const { return goalState_; }
+    void setGoalState(const T &goalState) { goalState_ = goalState; }
 
-protected:
+  protected:
     /**
      * A list of all Node objects in the tree.
      */
     std::deque<Node<T>> nodes_{};
 
-    std::unordered_map<T, Node<T>*, std::function<size_t(T)>> nodemap_;
+    std::unordered_map<T, Node<T> *, std::function<size_t(T)>> nodemap_;
 
     T goalState_;
 
@@ -422,5 +440,4 @@ protected:
     //std::unordered_set<T, std::function<size_t(T)>> near_states_active_;
 };
 
-
-}  // namespace RRT
+} // namespace RRT

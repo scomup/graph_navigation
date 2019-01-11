@@ -75,8 +75,10 @@ public:
     } while(!traversability_[idx]);
     return idx;
   }
-  std::vector<bool> traversability_;
+  
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_;
+  std::vector<uint16_t> traversability_;
+  
 private:
   mesh_graph_t graph_;
   

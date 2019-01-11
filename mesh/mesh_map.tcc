@@ -10,9 +10,11 @@
 
 template <typename T>
 MeshMap<T>::MeshMap(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
-    : HalfEdgeMesh<T>(),cloud_(cloud)
-{
+    : HalfEdgeMesh<T>(),cloud_(cloud),traversability_(cloud->size())
+{    
+
     // Normal estimation*
+    
     pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> n;
     pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>);
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
@@ -21,10 +23,13 @@ MeshMap<T>::MeshMap(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
     n.setSearchMethod(tree);
     n.setKSearch(20);
     n.compute(*normals);
+    
     //* normals should not contain the point normals + surface curvatures
     // Concatenate the XYZ and normal fields*
     pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointNormal>);
     pcl::concatenateFields(*cloud, *normals, *cloud_with_normals);
+
+     
     //* cloud_with_normals = cloud + normals
     // Create search tree*
     pcl::search::KdTree<pcl::PointNormal>::Ptr tree2(new pcl::search::KdTree<pcl::PointNormal>);
@@ -45,7 +50,9 @@ MeshMap<T>::MeshMap(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
     gp3.setInputCloud(cloud_with_normals);
     gp3.setSearchMethod(tree2);
     gp3.reconstruct(triangles);
-    std::vector<double> angles;
+    
+    
+
     for (auto &n : *normals)
     {
       if (n.normal[2] < 0)
@@ -55,20 +62,19 @@ MeshMap<T>::MeshMap(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
         n.normal[2] = -n.normal[2];
       }
     }
-    traversability_.resize(cloud->size());
+    
     for (size_t i = 0; i < cloud->size(); i++)
     {
         auto &point = cloud->points[i];
         auto &normal = normals->points[i].normal;
         this->addVertex(Eigen::Vector3d(point.x, point.y, point.z));
-        this->addNormal(Eigen::Vector3d(normal[0], normal[1], normal[2]));
+        //this->addNormal(Eigen::Vector3d(normal[0], normal[1], normal[2]));
         Eigen::Vector3d norm(normal[0],
                              normal[1],
                              normal[2]);
 
         Eigen::AngleAxisd angle_axis(Eigen::Quaterniond::FromTwoVectors(
             norm, Eigen::Vector3d::UnitZ()));
-        //angles.push_back(angle_axis.angle());
         if (angle_axis.angle() > M_PI / 6)
             traversability_[i] = false;
         else
@@ -84,13 +90,16 @@ MeshMap<T>::MeshMap(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud)
         size_t c = v.vertices[2];
         this->addTriangle(a, b ,c);
     }
-    make_graph();
+    //make_graph();
 }
 
 template <typename T>
 MeshMap<T>::MeshMap()
     : HalfEdgeMesh<T>()
 {
+
+    traversability_.resize(18522800);
+    printf("size : %d\n", traversability_.size());
 }
 template <typename T>
 bool MeshMap<T>::astar(uint start_idx, uint goal_idx, std::vector<int> &path){

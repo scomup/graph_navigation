@@ -20,7 +20,7 @@ class Vertex
 {
   public:
   	typedef HalfEdge< Vertex<T>, Face<T>> EdgeT;
-	typedef boost::shared_ptr<EdgeT> EdgeTPtr;
+	typedef EdgeT* EdgeTPtr;
 	Vertex(){}
 
 	Vertex(T p){

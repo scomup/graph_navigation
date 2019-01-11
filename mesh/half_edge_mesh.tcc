@@ -11,7 +11,9 @@ namespace Mesh
 template <typename T>
 void HalfEdgeMesh<T>::addVertex(T v)
 { 
-	VertexTPtr vertex = boost::make_shared<VertexT>(v);
+	//VertexTPtr vertex = boost::make_shared<VertexT>(v);
+	//printf("%d\n",sizeof(VertexT));
+	VertexTPtr vertex = new VertexT(v);
 	vertex->index_ = vertices_.size();
 	vertices_.push_back(vertex);
 	vertexs_size_++;
@@ -29,7 +31,7 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 {
 	
 	// Create a new face
-	FaceTPtr face = boost::make_shared<FaceT>();
+	FaceTPtr face = new FaceT;
 	faces_.push_back(face);
 
 	// Create a list of HalfEdges that will be connected
@@ -78,7 +80,7 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 				edges[k] = edgeToVertex->pair();
 			}
 			else{
-				HEdgeTPtr edge = boost::make_shared<HEdgeT>();
+				HEdgeTPtr edge = new HEdgeT;
 				//m_garbageEdges.insert(edge);
 				edge->setStart(edgeToVertex->end());
 				edge->setEnd(edgeToVertex->start());
@@ -89,13 +91,14 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 		else
 		{
 			// Create new edge and pair
-			HEdgeTPtr edge = boost::make_shared<HEdgeT>();
+			HEdgeTPtr edge = new HEdgeT;
+			printf("%d\n",sizeof(HEdgeT));
 			//m_garbageEdges.insert(edge);
 			edge->setFace(face);
 			edge->setStart(current);
 			edge->setEnd(next);
 
-			HEdgeTPtr pair = boost::make_shared<HEdgeT>();
+			HEdgeTPtr pair = new HEdgeT;
 			//m_garbageEdges.insert(pair);
 			pair->setStart(next);
 			pair->setEnd(current);
@@ -134,7 +137,7 @@ void HalfEdgeMesh<T>::addTriangle(size_t a, size_t b, size_t c)
 
 
 template<typename T>
-boost::shared_ptr<HalfEdge<Vertex<T>, Face<T>>> 
+HalfEdge<Vertex<T>, Face<T>>*
 HalfEdgeMesh<T>::halfEdgeToVertex(VertexTPtr v, VertexTPtr next)
 {
 	HEdgeTPtr edge = nullptr;

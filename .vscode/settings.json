@@ -56,6 +56,12 @@
         "utility": "cpp",
         "mutex": "cpp",
         "core": "cpp",
-        "numericaldiff": "cpp"
+        "numericaldiff": "cpp",
+        "csetjmp": "cpp",
+        "cfenv": "cpp",
+        "condition_variable": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp",
+        "scoped_allocator": "cpp"
     }
 }

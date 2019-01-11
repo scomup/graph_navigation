@@ -21,9 +21,9 @@ class  HalfEdgeMesh
 	typedef Face<T> FaceT;
     typedef Vertex<T> VertexT;
     typedef HalfEdge<VertexT, FaceT> HEdgeT;
-    typedef boost::shared_ptr<FaceT>    FaceTPtr;
-    typedef boost::shared_ptr<VertexT>  VertexTPtr;
-    typedef boost::shared_ptr<HEdgeT>   HEdgeTPtr;
+    typedef FaceT*    FaceTPtr;
+    typedef VertexT*  VertexTPtr;
+    typedef HEdgeT*   HEdgeTPtr;
 
 	virtual void addVertex(T v);
 	virtual void addNormal(T n);

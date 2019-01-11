@@ -86,13 +86,7 @@ void Viewer::Run()
         pangolin::glDrawAxis(1);
         
         
-        if(handler->getSign()){
-            printf("!\n");
-            path_.clear();
-            s_ = mesh_->getRandVec();
-            g_ = mesh_->getRandVec();
-            mesh_->astar(s_,g_,path_);
-        }
+
 
         //DrawGrid(200,1);
         /*
@@ -148,25 +142,35 @@ void Viewer::Run()
             
        }
        */
+
+      
         glColor3f(0.0f, 0.0f, 0.0f);
         glPointSize(10);
 
-        auto faces = mesh_->getFaces();
-        auto vertices = mesh_->getVertices();
+        const auto& positions = graph_->positions();
+
+        if (handler->getSign())
+        {
+            path_.clear();
+            s_ = rand()%positions.size();
+            g_ = rand()%positions.size();
+            graph_->FindPath(s_, g_, path_);
+        }
+
         glBegin(GL_POINTS);
-        auto start = vertices[s_]->position_;
+        auto start = positions[s_];
         glVertex3f(start.x(), start.y(), start.z());
         glEnd();
 
         glBegin(GL_POINTS);
-        auto goal = vertices[g_]->position_;
+        auto goal = positions[g_];
         glVertex3f(goal.x(), goal.y(), goal.z());
         glEnd();
         glColor3f(0.0f, 0.0f, 0.0f);
         glBegin(GL_LINE_STRIP);
         for (auto p : path_)
         {
-            auto point = vertices[p]->position_;
+            auto point = positions[p];
             glVertex3f(point.x(), point.y(), point.z());
         }
         glEnd();
@@ -186,29 +190,33 @@ void Viewer::Run()
             glVertex3f(c.x(), c.y(), c.z());
             glEnd();
         }
-       */
-
-       glPointSize(1);
-        for (int i = 0; i < vertices.size(); i++)
+  */     
+ /*
+        const auto& graph = graph_->graph();
+        for (uint u = 0 ; u < graph.size(); u++)
         {
-            if(!mesh_->traversability_[i])
-            glColor3f(1.0f, 0.0f, 0.0f);
-            else
-            glColor3f(0.0f, 1.0f, 0.0f);
-            auto a = vertices[i]->position_;
-            auto n = vertices[i]->normal_;
+            for(auto& e: graph[u]){
+                uint v = e.second;
+                auto uu = positions[u];
+                auto vv = positions[v];
+                pangolin::glColorHSV(std::abs((uu.z()+vv.z()) * 50));
+                glBegin(GL_LINES);
+                glVertex3f(uu.x(), uu.y(), uu.z());
+                glVertex3f(vv.x(), vv.y(), vv.z());
+                glEnd();
+            }
+        }*/
+        
+       glPointSize(1);
+        for (uint i = 0; i < positions.size(); i++)
+        {
+            auto a = positions[i];
+            pangolin::glColorHSV(std::abs(a.z() * 100));
             glBegin(GL_POINTS);
             glVertex3f(a.x(), a.y(), a.z());
             glEnd();
-            /*
-            pangolin::glColorHSV(std::abs(a.z() * 100));
-            glBegin(GL_LINES);
-            glVertex3f(a.x(), a.y(), a.z());
-            glVertex3f(a.x()+n.x()/10, a.y()+n.y()/10, a.z()+n.z()/10);
-            glEnd();
-            */
-
         }
+        
         pangolin::FinishFrame();
     }
     SetFinish();
@@ -224,8 +232,8 @@ void Viewer::SetCloudDrawer(std::shared_ptr<CloudAnalyzerHandle> cloud_analyzer_
     cloud_analyzer_handle_ = cloud_analyzer_handle;
 }
 
-void Viewer::SetMesh(MeshMap<Eigen::Vector3d>* mesh)
+void Viewer::SetMesh(NaviGraph<Eigen::Vector3d, float>* mesh)
 {
-    mesh_ = mesh;
-    mesh_->astar(s_,g_,path_);
+    graph_ = mesh;
+    graph_->FindPath(s_,g_,path_);
 }

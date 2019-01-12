@@ -19,6 +19,9 @@ class DijkstraGraph : public NaviGraph<PositionT, CostT>
     typedef typename BaseGraph<PositionT, CostT>::out_edge_t edge;
 
   public:
+      DijkstraGraph(std::function<size_t(PositionT)> hashT)
+        : NaviGraph<PositionT, CostT>(hashT){}
+
     bool FindPath(const uint start, const uint goal, std::vector<uint> &path)
     {
         std::vector<CostT> cost_table(this->graph_.size(), inf);

@@ -80,7 +80,7 @@ private:
     Eigen::Vector3d start_ = Eigen::Vector3d(0,0,0);
     Eigen::Vector3d goal_ = Eigen::Vector3d(0,0,0);
     NaviGraph<Eigen::Vector3d, float>* graph_;
-    uint s_ = 1800;
+    uint s_ = 24693;
     uint g_ = 8;
     std::vector<uint> path_;
 

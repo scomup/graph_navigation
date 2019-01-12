@@ -21,8 +21,9 @@ template <typename PositionT, typename CostT>
 class NaviGraph : public BaseGraph<PositionT, CostT>
 {
   public:
-    NaviGraph()
-        : BaseGraph<PositionT, CostT>(),
+
+    NaviGraph(std::function<size_t(PositionT)> hashT)
+        : BaseGraph<PositionT, CostT>(hashT),
           kdtree_(flann::KDTreeSingleIndexParams()),
           kdtree_init_(false)
     {
@@ -37,18 +38,49 @@ class NaviGraph : public BaseGraph<PositionT, CostT>
     virtual void AddNode(const PositionT p)
     {
         this->BaseGraph<PositionT, CostT>::AddNode(p);
-        flann::Matrix<double> out(new double[3],
-                                  1, 3);
-        if (!kdtree_init_)
+    }
+
+    void initKDTree()
+    {
+        auto nodes = this->positions();
+        assert(nodes.size() > 0); //
+        int dim = nodes[0].rows();
+        double targetData[nodes.size() * dim];
+        for (uint i = 0; i < nodes.size(); ++i)
         {
-            kdtree_.buildIndex(convertEigen2Flann(p));
-            cout
+            for (int j = 0; j < dim; ++j)
+                targetData[i * dim + j] = nodes[i](j, 0);
         }
-        {
-            kdtree_.addPoints(convertEigen2Flann(p));
+        flann::Matrix<double> dataset(targetData, nodes.size(), dim);
+        kdtree_ = flann::Index<flann::L2_Simple<double>>(
+            dataset,
+            flann::KDTreeSingleIndexParams());
+        kdtree_.buildIndex();
+        kdtree_init_ = true;
+    }
+
+    void FindNearest(const PositionT &point, double *distanceOut = nullptr)
+    {
+
+            // k-NN search (O(log(N)))
+            flann::Matrix<double> query = convertEigen2Flann(point);
             
-            kdtree_init_ = true;
-        }
+            std::vector<int> i(query.rows);
+            flann::Matrix<int> indices(i.data(), query.rows, 1);
+            std::vector<double> d(query.rows);
+            flann::Matrix<double> dists(d.data(), query.rows, 1);
+
+            kdtree_.knnSearch(query, indices, dists, 1, flann::SearchParams());
+
+            PositionT nearest;
+            nearest = (PositionT)kdtree_.getPoint(indices[0][0]);
+            printf("indx %d\n",indices[0][0]);
+            std::cout<<this->GetIndex(nearest)<<std::endl;
+            if (distanceOut)
+            {
+                *distanceOut = (point - nearest).norm();
+            }
+
     }
 
   private:

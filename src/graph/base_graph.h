@@ -6,6 +6,7 @@
 #include <set>
 #include <cstdint>
 #include <cassert>
+#include <unordered_map>
 
 namespace GraphNavigation
 {
@@ -19,12 +20,13 @@ class BaseGraph
 	typedef std::pair<CostT, uint> out_edge_t;
 	typedef std::set<out_edge_t> node_t;
 
-	BaseGraph(){}
+	BaseGraph(std::function<size_t(PositionT)> hashT) : nodemap_(20, hashT) {}
 
 	virtual void AddNode(const PositionT p){
 		node_t n;
 		positions_.push_back(p);
 		graph_.push_back(n);
+		nodemap_.insert(std::pair<PositionT, uint>(p, positions_.size()-1));
 	}
 
 	virtual void AddEdge(const uint a, const uint b){
@@ -52,9 +54,23 @@ class BaseGraph
 		return graph_;
 	}
 
+	const int GetIndex(const PositionT p) const
+	{
+		auto search = nodemap_.find(p);
+		if (search != nodemap_.end())
+		{
+			return search->second;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	
   protected:
 	std::vector<PositionT> positions_;
 	std::vector<node_t> graph_;
+	std::unordered_map<PositionT, uint, std::function<size_t(PositionT)>> nodemap_;
 };
 
 } // namespace Graph

@@ -39,6 +39,8 @@ int main()
         std::cout << path[i] << " ";
     std::cout << std::endl;
 }*/
+
+
 #include <chrono>
 #include <thread>
 #include <memory>
@@ -63,6 +65,10 @@ int main()
 
 #include "src/graph/dijkstra_graph.h"
 #include "src/graph/astar_graph.h"
+#include <flann/algorithms/dist.h>
+#include <flann/algorithms/kdtree_single_index.h>
+#include <flann/flann.hpp>
+
 
 
 using namespace GraphNavigation::Graph;
@@ -94,8 +100,30 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr &input)
 }
 
 int main(int argc, char **argv)
-{
+{/*
+    int N = 10;
+    int dim = 3;
+    double targetData[N * dim];
+    for (uint i = 0; i < N; ++i)
+    {
+        for (int j = 0; j < dim; ++j)
+            targetData[i * dim + j] = 1;
+    }
+    flann::Matrix<double> dataset(targetData, N, dim);
+    flann::Index<flann::L2<double>> index(dataset, flann::KDTreeIndexParams(8));
+    index.buildIndex();
+    double queryData[3];
+    queryData[0] = 1;
+    queryData[1] = 2;
+    queryData[2] = 3;
 
+    flann::Matrix<double> query(queryData, 1, 3);
+    flann::Matrix<int> indices(new int[3], query.rows, 1);
+    flann::Matrix<double> dists(new double[3], query.rows, 1);
+
+    index.knnSearch(query, indices, dists, 1, flann::SearchParams(128));
+
+    return 0;*/
     ros::init(argc, argv, "test_traversability");
     ros::NodeHandle nh;
     // Create a ROS subscriber for the input point cloud
@@ -144,12 +172,24 @@ int main(int argc, char **argv)
     gp3.setSearchMethod(tree2);
     gp3.reconstruct(triangles);
 
-    DijkstraGraph<Eigen::Vector3d, float> graph;
+    std::function<size_t(Eigen::Vector3d)> f = [](Eigen::Vector3d state) {
+             size_t seed = 0;
+            boost::hash_combine(seed, state.x());
+            boost::hash_combine(seed, state.y());
+            boost::hash_combine(seed, state.z());
+            return seed; };
+
+    DijkstraGraph<Eigen::Vector3d, float> graph(
+        [](Eigen::Vector3d state) {
+             size_t seed = 0;
+            boost::hash_combine(seed, state.x());
+            boost::hash_combine(seed, state.y());
+            boost::hash_combine(seed, state.z());
+            return seed; });
     for (size_t i = 0; i < cloud->size(); i++)
     {
         auto &point = cloud->points[i];
         graph.AddNode(Eigen::Vector3d(point.x, point.y, point.z));
-        printf("%d\n",i);
     }
 
     for (::pcl::Vertices v : triangles.polygons)
@@ -163,7 +203,10 @@ int main(int argc, char **argv)
         graph.AddEdge(b, c);
         graph.AddEdge(c, a);
     }
-    std::cout << "graph was created!\n";
+    graph.initKDTree();
+    double d;
+    graph.FindNearest(Eigen::Vector3d(0,0,0),&d);
+    std::cout <<d<< " graph was created!\n";
     auto viewer = new Viewer();
     auto viewer_thread = std::thread(&Viewer::Run, viewer);
 
@@ -171,35 +214,3 @@ int main(int argc, char **argv)
     viewer_thread.join();
 }
 
-    /*
-    MeshMap<Eigen::Vector3d> mesh;
-
-    mesh.addVertex(Eigen::Vector3d(0, 0, 0));//0
-    mesh.addVertex(Eigen::Vector3d(0, 1, 0));//1
-    mesh.addVertex(Eigen::Vector3d(0, 2, 0));//2
-
-    mesh.addVertex(Eigen::Vector3d(1, 0, 0));//3
-    mesh.addVertex(Eigen::Vector3d(1, 1, 0));//4
-    mesh.addVertex(Eigen::Vector3d(1, 2, 0));//5
-
-    mesh.addVertex(Eigen::Vector3d(2, 0, 0));//6
-    mesh.addVertex(Eigen::Vector3d(2, 1, 0));//7
-    mesh.addVertex(Eigen::Vector3d(2, 2, 0));//8
-
-    mesh.addTriangle(0, 3 ,4);
-    mesh.addTriangle(0, 1 ,4);
-    mesh.addTriangle(1, 2 ,5);
-    mesh.addTriangle(1, 4 ,5);
-    mesh.addTriangle(3, 4 ,7);
-    mesh.addTriangle(3, 6 ,7);
-    mesh.addTriangle(4, 5 ,8);
-    mesh.addTriangle(4, 7 ,8);
-    mesh.make_graph();*/
-    /*
-    auto viewer = new Viewer();
-    auto viewer_thread = std::thread(&Viewer::Run, viewer);
-
-    viewer->SetMesh(&mesh);
-    viewer_thread.join();
-    
-}*/

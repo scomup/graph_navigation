@@ -155,6 +155,7 @@ void Viewer::Run()
             s_ = rand()%positions.size();
             g_ = rand()%positions.size();
             graph_->FindPath(s_, g_, path_);
+            graph_->SmoothPath(path_);
         }
 
         glBegin(GL_POINTS);

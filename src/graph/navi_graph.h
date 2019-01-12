@@ -42,7 +42,7 @@ class NaviGraph : public BaseGraph<PositionT, CostT>
 
     void initKDTree()
     {
-        auto nodes = this->positions();
+        auto& nodes = this->positions();
         assert(nodes.size() > 0); //
         int dim = nodes[0].rows();
         double targetData[nodes.size() * dim];
@@ -59,7 +59,8 @@ class NaviGraph : public BaseGraph<PositionT, CostT>
         kdtree_init_ = true;
     }
 
-    void FindNearest(const PositionT &point, double *distanceOut = nullptr)
+
+    PositionT FindNearest(const PositionT &point, double *distanceOut = nullptr, uint *idx = nullptr)
     {
 
             // k-NN search (O(log(N)))
@@ -74,13 +75,69 @@ class NaviGraph : public BaseGraph<PositionT, CostT>
 
             PositionT nearest;
             nearest = (PositionT)kdtree_.getPoint(indices[0][0]);
-            printf("indx %d\n",indices[0][0]);
-            std::cout<<this->GetIndex(nearest)<<std::endl;
+            //printf("indx %d\n",indices[0][0]);
+            //std::cout<<this->GetIndex(nearest)<<std::endl;
             if (distanceOut)
             {
                 *distanceOut = (point - nearest).norm();
             }
+            if (idx)
+            {
+                *idx = indices[0][0];
+            }
+            return nearest;
+    }
 
+    bool transitionValid(const PositionT &from,
+                         const PositionT &to)
+    {
+        //  make sure we're within bounds
+        //if (!stateValid(to))
+        //    return false;
+        double min_check_step_ = 0.1;
+        PositionT delta = to - from;
+
+        double len = delta.norm();
+
+        if (len < min_check_step_)
+            return true;
+
+        for (double l = 0; l < len; l += min_check_step_)
+        {
+            PositionT mid = from + delta * l / len;
+            double d;
+
+            FindNearest(mid, &d);
+
+            if (d > min_check_step_)
+                return false;
+        }
+        return true;
+    }
+
+        void SmoothPath(std::vector<uint> &pts)
+    {
+
+        int span = 2;
+        auto& nodes = this->positions();
+        while (span < pts.size())
+        {
+            bool changed = false;
+            for (int i = 0; i + span < pts.size(); i++)
+            {
+                if (transitionValid(nodes[pts[i]], nodes[pts[i + span]]))
+                {
+                    for (int x = 1; x < span; x++)
+                    {
+                        pts.erase(pts.begin() + i + 1);
+                    }
+                    changed = true;
+                }
+            }
+
+            if (!changed)
+                span++;
+        }
     }
 
   private:
